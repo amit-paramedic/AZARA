@@ -916,6 +916,22 @@ async function makePdfBlob(){
     return pdf.output('blob');
   }
 
+  function buildPdfFilename(){
+    const get = (name) => (document.querySelector(`input[name="${name}"]`)?.value || '').trim();
+    const id = get('personal_id');
+    const first = get('first_name');
+    const last = get('last_name');
+
+    // Strip characters that are unsafe/problematic in filenames across
+    // Windows/Mac/Android/iOS (slashes, colons, quotes, etc.), but keep
+    // Hebrew letters, numbers, spaces, and hyphens intact.
+    const clean = (s) => s.replace(/[\\/:*?"<>|]/g, '').trim();
+
+    const parts = [clean(id), clean(first), clean(last)].filter(p => p !== '');
+    if(parts.length === 0) return 'הצהרת_בריאות.pdf';
+    return parts.join('_') + '.pdf';
+  }
+
   document.getElementById('btnPdf').addEventListener('click', async () => {
     try{
       const blob = await makePdfBlob();
@@ -923,7 +939,7 @@ async function makePdfBlob(){
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'הצהרת_בריאות.pdf';
+      a.download = buildPdfFilename();
       document.body.appendChild(a);
       a.click();
       a.remove();
